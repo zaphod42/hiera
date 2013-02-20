@@ -1,7 +1,7 @@
 require 'yaml'
 
 require 'hiera/class_reference'
-require 'hiera/backend/hierarchy'
+require 'hiera/hierarchy'
 
 class Hiera::Config
   class << self
@@ -29,7 +29,7 @@ class Hiera::Config
   end
 
   def hierarchy(interpolater)
-    Hiera::Backend::Hierarchy.new(@hierarchy.collect do |level|
+    Hiera::Hierarchy.new(@hierarchy.collect do |level|
       level.backend_instance(interpolater, logger)
     end, logger, interpolater)
   end
@@ -37,8 +37,8 @@ class Hiera::Config
   class HierarchyLevelConfig
     attr_reader :name, :type, :type_config
 
-    def initialize(name, information)
-      @name = name
+    def initialize(information)
+      @name = information['name']
       @class_ref = Hiera::ClassReference.new(Hiera::Backend, information['type'])
       @type_config = information['config']
     end

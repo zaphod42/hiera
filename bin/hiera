@@ -112,7 +112,7 @@ end
 begin
   config = Hiera::Config.load(options[:config])
 rescue Exception => e
-  STDERR.puts "Failed to start Hiera: #{e.class}: #{e}"
+  STDERR.puts "Failed to start Hiera: #{e.class}: #{e}\n#{e.backtrace}"
   exit 1
 end
 

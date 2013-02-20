@@ -1,6 +1,6 @@
 require 'hiera/answer'
 
-class Hiera::Backend::Hierarchy
+class Hiera::Hierarchy
   def initialize(levels, logger, data)
     @levels = levels
     @logger = logger

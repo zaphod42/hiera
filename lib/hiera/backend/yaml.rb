@@ -14,7 +14,7 @@ class Hiera::Backend::Yaml
 
     @logger.debug("Looking up #{key} in YAML backend.")
 
-    file = File.join(config['dir'], "#{@name}.#{config['suffix'] || 'yaml'}")
+    file = File.join(@config['dir'], "#{@name}.#{@config['suffix'] || 'yaml'}")
 
     @logger.debug("Looking in #{file}.")
 
@@ -22,8 +22,10 @@ class Hiera::Backend::Yaml
       data = YAML.load_file(file)
 
       if data.include?(key)
+        @logger.debug("#{key} found in #{file}. Answer.")
         Hiera::Answer.something(@interpolater.expand(data[key]))
       else
+        @logger.debug("#{key} not found in #{file}. No answer.")
         Hiera::Answer.nothing
       end
     else
