@@ -1,77 +1,51 @@
+require 'yaml'
+
+require 'hiera/class_reference'
+require 'hiera/backend/hierarchy'
+
 class Hiera::Config
   class << self
-    ##
-    # load takes a string or hash as input, strings are treated as filenames
-    # hashes are stored as data that would have been in the config file
-    #
-    # Unless specified it will only use YAML as backend with a single
-    # 'common' hierarchy and console logger
-    #
-    # @return [Hash] representing the configuration.  e.g.
-    #   {:backends => "yaml", :hierarchy => "common"}
     def load(source)
-      @config = {:backends => "yaml",
-                 :hierarchy => "common",
-                 :merge_behavior => :native }
-
-      if source.is_a?(String)
-        if File.exist?(source)
-          config = begin
-                     yaml_load_file(source)
-                   rescue TypeError => detail
-                     case detail.message
-                     when /no implicit conversion from nil to integer/
-                       false
-                     else
-                       raise detail
-                     end
-                   end
-          @config.merge! config if config
-        else
-          raise "Config file #{source} not found"
-        end
-      elsif source.is_a?(Hash)
-        @config.merge! source
-      end
-
-      @config[:backends] = [ @config[:backends] ].flatten
-
-      if @config.include?(:logger)
-        Hiera.logger = @config[:logger].to_s
+      if File.exist?(source)
+        config = YAML.load_file(source)
+        Hiera::Config.new(config)
       else
-        @config[:logger] = "console"
-        Hiera.logger = "console"
-      end
-
-      @config
-    end
-
-    ##
-    # yaml_load_file directly delegates to YAML.load_file and is intended to be
-    # a private, internal method suitable for stubbing and mocking.
-    #
-    # @return [Object] return value of {YAML.load_file}
-    def yaml_load_file(source)
-      YAML.load_file(source)
-    end
-    private :yaml_load_file
-
-    def load_backends
-      @config[:backends].each do |backend|
-        begin
-          require "hiera/backend/#{backend.downcase}_backend"
-        rescue LoadError => e
-          Hiera.warn "Cannot load backend #{backend}: #{e}"
-        end
+        raise "Config file #{source} not found"
       end
     end
+  end
 
-    def include?(key)
-      @config.include?(key)
+  def initialize(config_data)
+    @logger_config = {
+      :class_ref => Hiera::ClassReference.new(Hiera::Logger, config_data['logger']['name']),
+      :config => config_data['logger']['config']
+    }
+    @hierarchy = config_data['hierarchy'].collect { |level| HierarchyLevelConfig.new(level) }
+  end
+
+  def logger
+    @logger_config[:class_ref].load
+    @logger_config[:class_ref].create(@logger_config[:config])
+  end
+
+  def hierarchy(data)
+    Hiera::Backend::Hierarchy.new(@hierarchy.collect do |level|
+      level.backend_instance(data, logger)
+    end, logger, data)
+  end
+
+  class HierarchyLevelConfig
+    attr_reader :name, :type, :type_config
+
+    def initialize(name, information)
+      @name = name
+      @class_ref = Hiera::ClassReference.new(Hiera::Backend, information['type'])
+      @type_config = information['config']
     end
 
-    def [](key)
-      @config[key]
+    def backend_instance(data, logger)
+      @class_ref.load
+      @class_ref.create(data.expand(name), type_config, logger, data)
     end
   end
 end

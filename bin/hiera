@@ -111,12 +111,12 @@ else
 end
 
 begin
-  hiera = Hiera.new(:config => options[:config])
+  hiera = Hiera.new(Hiera::Config.load(options[:config]))
 rescue Exception => e
   STDERR.puts "Failed to start Hiera: #{e.class}: #{e}"
   exit 1
 end
 
-ans = hiera.lookup(options[:key], options[:default], options[:scope], nil, options[:resolution_type])
+ans = hiera.lookup(options[:key], options[:default], options[:scope], options[:resolution_type])
 
 p ans

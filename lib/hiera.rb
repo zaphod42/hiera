@@ -1,53 +1,21 @@
-require 'yaml'
-
 class Hiera
   VERSION = "1.1.2"
 
-  autoload :Backend,        "hiera/backend"
-  autoload :Config,         "hiera/config"
-  autoload :Console_logger, "hiera/console_logger"
-  autoload :Filecache,      "hiera/filecache"
-  autoload :Noop_logger,    "hiera/noop_logger"
-  autoload :Puppet_logger,  "hiera/puppet_logger"
-  autoload :Util,           "hiera/util"
+  require "hiera/data"
+  require "hiera/config"
+  require "hiera/console_logger"
 
   class << self
-    attr_reader :logger
-
     def version
       VERSION
     end
-
-    # Loggers are pluggable, just provide a class called
-    # Hiera::Foo_logger and respond to :warn and :debug
-    #
-    # See hiera-puppet for an example that uses the Puppet
-    # loging system instead of our own
-    def logger=(logger)
-      loggerclass = "#{logger.capitalize}_logger"
-
-      require "hiera/#{logger}_logger" unless constants.include?(loggerclass)
-
-      @logger = const_get(loggerclass)
-    rescue Exception => e
-      @logger = Console_logger
-      warn("Failed to load #{logger} logger: #{e.class}: #{e}")
-    end
-
-    def warn(msg); @logger.warn(msg); end
-    def debug(msg); @logger.debug(msg); end
   end
 
-  attr_reader :options, :config
-
-  # If the config option is a string its assumed to be a filename,
-  # else a hash of what would have been in the YAML config file
-  def initialize(options={})
-    options[:config] ||= File.join(Util.config_dir, 'hiera.yaml')
-
-    @config = Config.load(options[:config])
-
-    Config.load_backends
+  def initialize(config = nil)
+    @config = config || Hiera::Config.new({
+      'logger' => 'console',
+      'hierarchy' => []
+    })
   end
 
   # Calls the backends to do the actual lookup.
@@ -59,8 +27,9 @@ class Hiera
   #
   # The order-override will insert as first in the hierarchy a data source
   # of your choice.
-  def lookup(key, default, scope, order_override=nil, resolution_type=:priority)
-    Backend.lookup(key, default, scope, order_override, resolution_type)
+  def lookup(key, default, scope, resolution_type=:priority)
+    data = Hiera::Data.new(scope)
+    @config.hierarchy(data).lookup(key, resolution_type).otherwise(default)
   end
 end
 
