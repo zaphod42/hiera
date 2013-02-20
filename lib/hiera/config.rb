@@ -28,10 +28,10 @@ class Hiera::Config
     @logger_config[:class_ref].create(@logger_config[:config])
   end
 
-  def hierarchy(data)
+  def hierarchy(interpolater)
     Hiera::Backend::Hierarchy.new(@hierarchy.collect do |level|
-      level.backend_instance(data, logger)
-    end, logger, data)
+      level.backend_instance(interpolater, logger)
+    end, logger, interpolater)
   end
 
   class HierarchyLevelConfig
@@ -43,9 +43,9 @@ class Hiera::Config
       @type_config = information['config']
     end
 
-    def backend_instance(data, logger)
+    def backend_instance(interpolater, logger)
       @class_ref.load
-      @class_ref.create(data.expand(name), type_config, logger, data)
+      @class_ref.create(interpolater.expand(name), type_config, logger, interpolater)
     end
   end
 end

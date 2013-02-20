@@ -22,13 +22,12 @@ if not defined? ::Bundler
   end
 end
 require 'hiera'
-require 'hiera/util'
 require 'optparse'
 require 'json'
 
 options = {
   :default => nil,
-  :config  => File.join(Hiera::Util.config_dir, 'hiera.yaml'),
+  :config  => '/etc/hiera/hiera.yaml',
   :scope   => {},
   :key     => nil,
   :verbose => false,
@@ -111,12 +110,12 @@ else
 end
 
 begin
-  hiera = Hiera.new(Hiera::Config.load(options[:config]))
+  config = Hiera::Config.load(options[:config])
 rescue Exception => e
   STDERR.puts "Failed to start Hiera: #{e.class}: #{e}"
   exit 1
 end
 
-ans = hiera.lookup(options[:key], options[:default], options[:scope], options[:resolution_type])
-
-p ans
+data = Hiera::Interpolation.new(options[:scope])
+hierarchy = config.hierarchy(data)
+p hierarchy.lookup(options[:key], options[:resolution_type]).otherwise(options[:default])

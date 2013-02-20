@@ -1,4 +1,4 @@
-class Hiera::Data
+class Hiera::Interpolation
   INTERPOLATION_POINT = /%{([^}]*)}/
 
   def initialize(datastore)

@@ -23,19 +23,19 @@ class Hiera::Backend::Hierarchy
 private
   def lookup_array(key)
     Hiera::Answer.something(@levels.collect do |level|
-      level.lookup(key, :array).otherwise(nil)
+      level.lookup(key).otherwise(nil)
     end.flatten.uniq.compact)
   end
 
   def lookup_hash(key)
     Hiera::Answer.something(@levels.inject({}) do |so_far, level|
-      so_far.merge!(level.lookup(key, :hash).otherwise({}))
+      so_far.merge!(level.lookup(key).otherwise({}))
     end)
   end
 
   def lookup_priority(key)
     @levels.each do |level|
-      answer = level.lookup(key, :priority)
+      answer = level.lookup(key)
       if answer.defined?
         return answer
       end
