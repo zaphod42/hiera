@@ -4,10 +4,10 @@ require 'hiera/backend/hash_lookup'
 require 'hiera/backend/priority_lookup'
 
 class Hiera::Hierarchy
-  def initialize(levels, logger, data)
-    @levels = levels
-    @logger = logger
-    @data = data
+  def initialize(hierarchy, logger, interpolater)
+    @levels = Hiera::Config::HierarchyLevel.parse(hierarchy).collect do |level|
+      level.backend_instance(interpolater, logger)
+    end
   end
 
   def lookup(key, resolution)

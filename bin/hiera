@@ -117,5 +117,5 @@ rescue Exception => e
 end
 
 data = Hiera::Interpolation.new(options[:scope])
-hierarchy = config.hierarchy(data)
+hierarchy = Hiera::Hierarchy.new(config.hierarchy, config.logger, data)
 p hierarchy.lookup(options[:key], options[:resolution_type]).otherwise(options[:default])
