@@ -5,19 +5,28 @@ require 'hiera/backend/priority_lookup'
 
 class Hiera::Hierarchy
   def initialize(hierarchy, logger, interpolater)
-    @levels = Hiera::Config::HierarchyLevel.parse(hierarchy).collect do |level|
-      level.backend_instance(interpolater, logger)
-    end
+    @hierarchy = hierarchy
+    @logger = logger
+    @interpolater = interpolater
   end
 
   def lookup(key, resolution)
     case resolution
     when :array
-      Hiera::Backend::ArrayLookup.new(@levels).lookup(key)
+      Hiera::Backend::ArrayLookup.new("array lookup",
+                                      { 'hierarchy' => @hierarchy },
+                                      @logger,
+                                      @interpolater).lookup(key)
     when :hash
-      Hiera::Backend::HashLookup.new(@levels).lookup(key)
+      Hiera::Backend::HashLookup.new("hash lookup",
+                                     { 'hierarchy' => @hierarchy },
+                                     @logger,
+                                     @interpolater).lookup(key)
     when :priority
-      Hiera::Backend::PriorityLookup.new(@levels).lookup(key)
+      Hiera::Backend::PriorityLookup.new("priority lookup",
+                                         { 'hierarchy' => @hierarchy },
+                                         @logger,
+                                         @interpolater).lookup(key)
     else
       raise "Unknown resolution type: #{resolution}"
     end

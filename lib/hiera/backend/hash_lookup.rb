@@ -1,8 +1,10 @@
 require 'hiera/answer'
 
 class Hiera::Backend::HashLookup
-  def initialize(levels)
-    @levels = levels
+  def initialize(name, config, logger, interpolater)
+    @levels = Hiera::Config::HierarchyLevel.parse(config['hierarchy']).collect do |level|
+      level.backend_instance(interpolater, logger)
+    end
   end
 
   def lookup(key)
