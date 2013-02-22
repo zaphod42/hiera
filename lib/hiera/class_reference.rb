@@ -2,7 +2,7 @@ class Hiera::ClassReference
   def initialize(container, name)
     @container = container
     @name = name
-    @class_name = name.gsub(/(?:^(.))|_(.)/) { $1.upcase }
+    @class_name = name.gsub(/(?:^(.))|_(.)/) { ($1 || $2).upcase }
   end
 
   def load

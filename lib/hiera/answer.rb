@@ -4,6 +4,10 @@ module Hiera::Answer
       alternate
     end
 
+    def value
+      raise "Cannot get a value from Nothing"
+    end
+
     def defined?
       false
     end
@@ -16,6 +20,10 @@ module Hiera::Answer
     end
 
     def otherwise(alternate)
+      @value
+    end
+
+    def value
       @value
     end
 

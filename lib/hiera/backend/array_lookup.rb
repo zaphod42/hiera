@@ -8,8 +8,14 @@ class Hiera::Backend::ArrayLookup
   end
 
   def lookup(key)
-    Hiera::Answer.something(@levels.collect do |level|
-      level.lookup(key).otherwise(nil)
-    end.flatten.uniq.compact)
+    answers = @levels.collect do |level|
+      level.lookup(key)
+    end.select(&:defined?)
+
+    if answers.empty?
+      Hiera::Answer.nothing
+    else
+      Hiera::Answer.something(answers.collect(&:value).flatten)
+    end
   end
 end
