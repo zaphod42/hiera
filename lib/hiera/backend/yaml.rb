@@ -10,8 +10,6 @@ class Hiera::Backend::Yaml
   end
 
   def lookup(key)
-    answer = nil
-
     @logger.debug("Looking up #{key} in YAML backend.")
 
     file = File.join(@config['dir'], "#{@name}.#{@config['suffix'] || 'yaml'}")

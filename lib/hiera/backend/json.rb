@@ -14,12 +14,12 @@ class Hiera::Backend::Json
 
     @logger.debug("Looking up #{key} in JSON backend.")
 
-    file = File.join(config['dir'], "#{@name}.#{config['suffix'] || 'json'}")
+    file = File.join(@config['dir'], "#{@name}.#{@config['suffix'] || 'json'}")
 
     @logger.debug("Looking in #{file}.")
 
     if File.exist?(file)
-      data = JSON.load_file(file)
+      data = JSON.load(File.read(file))
 
       if data.include?(key)
         Hiera::Answer.something(@interpolater.expand(data[key]))
